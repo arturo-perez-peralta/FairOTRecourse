@@ -1,6 +1,6 @@
 # Fair Optimal Transport Experiments
 
-<img src="FiguraFairness.png" alt="Collective recourse must incorporate fairness considerations to prevent harming certain individuals or collectives by demanding unequal efforts from end users." width="200"/>
+<img src="FiguraFairness.png" alt="Collective recourse must incorporate fairness considerations to prevent harming certain individuals or collectives by demanding unequal efforts from end users." width="600"/>
 
 Optimal Transport for **fair** recourse: three experiments (F1-F3) that equalize
 the cost of recourse across individuals and demographic groups.
