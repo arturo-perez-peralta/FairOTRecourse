@@ -12,5 +12,5 @@ COPY tests/ ./tests/
 
 RUN pip install --no-cache-dir -e ".[viz]"
 
-# Run all fairness experiments (F1, F2, F3) sequentially.
-CMD ["python", "-m", "fairopt.experiments.run_all"]
+# Run all fairness experiments.
+CMD ["python", "-m", "fairopt.experiments.fairness_exp"]
