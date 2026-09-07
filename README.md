@@ -7,11 +7,10 @@ the cost of recourse across individuals and demographic groups.
 
 ## Experiments
 
-| ID | Module | What it measures | Output CSV |
-|----|--------|------------------|------------|
-| F1 | `f1_individual_fairness` | **Individual fairness**: regularizes the plan with `λ_ind·(c−m)²` so each individual pays a similar transport cost. 10-fold CV over 14 `λ_ind` values × 7 datasets | `results/f1_individual_fairness.csv` |
-| F2 | `f2_group_fairness` | **Group fairness**: per-group `θ_z` factor pushes above-average groups toward the global mean cost as `λ_g` grows. 10-fold CV over 34 `λ_g` values × 7 datasets | `results/f2_group_fairness.csv` |
-| F3 | `f3_mixed_fairness` | **Mixed fairness**: combined group + individual with the enhanced stable solver (decoupled cost `θ_z·c + λ_ind·(c−m_z)²`, exact bisection θ, damped m, ε-annealing, log-domain Sinkhorn, warm-start). Grid 14 `λ_ind` × 34 `λ_g` × 10 folds × 7 datasets | `results/f3_mixed_fairness.csv` |
+| ID | Module | What it measures | 
+|----|--------|------------------|
+| F | `fairness_exp` | Perform sensitivity analysis  | 
+
 
 ## Project structure
 
@@ -22,9 +21,9 @@ fairness/
 │   ├── data/                 # dataset loaders + preprocessing
 │   ├── solvers/              # individual, group, combined group+individual
 │   ├── utils/                # ILR transform, simplex projection
-│   └── experiments/          # f1, f2, f3, config, runner (CV harness), run_all
+│   └── experiments/          # experiment, config
 ├── tests/                    # pytest suite (sinkhorn, solvers, ilr, simplex)
-├── visualization.ipynb       # F1, F2, F3 plots + tables
+├── visualization.ipynb       # plots + tables
 ├── pyproject.toml            # dependencies
 ├── Dockerfile                # reproducible container
 └── Makefile                  # convenience targets
@@ -48,20 +47,8 @@ Each experiment writes CSVs into `results/` (created automatically).
 
 ```bash
 # single experiments (10-fold CV)
-python -m fairopt.experiments.f1_individual_fairness
-python -m fairopt.experiments.f2_group_fairness
-
-# F3 (enhanced mixed) — long run, resumable
-python -m fairopt.experiments.f3_mixed_fairness --device cpu            # or cuda
-python -m fairopt.experiments.f3_mixed_fairness --resume --device cpu   # skip done datasets
-
-# everything sequentially
-python -m fairopt.experiments.run_all
+python -m fairopt.experiments.fairness_exp.py
 ```
-
-All three `run` functions also accept `use_cv=False` for a single 80/20 split
-(useful for quick checks), e.g.
-`python -c "from fairopt.experiments.f1_individual_fairness import run; run(use_cv=False)"`.
 
 ## Visualization
 
@@ -69,8 +56,7 @@ All three `run` functions also accept `use_cv=False` for a single 80/20 split
 jupyter notebook visualization.ipynb
 ```
 
-The notebook loads the CSVs from `results/` and renders the figures/tables for
-F1, F2 and F3. Run the experiments first.
+The notebook loads the CSVs from `results/` and renders the figures/tables. Run the experiments first.
 
 ## Docker (reproducible environment)
 
@@ -113,9 +99,9 @@ python -m pytest tests/ -v --tb=short
 
 ---
 
-## F3 enhanced solver: why it is faster and converges better
+## Enhanced solver: why it is faster and converges better
 
-F3 replaces the old E5 runner. The gains come from the solver + runner changes below.
+Some gains are due to the following design decisions.
 
 ### 1. Warm-starting across the λ grid (dominant runtime win)
 The old `cross_validate` harness constructed a **fresh solver per (fold, λ_ind, λ_g)**
@@ -167,8 +153,3 @@ the reported plan/metrics.
 `--resume` skips datasets already present in `f3_mixed_fairness.csv`;
 `FAIROPT_NUM_THREADS=16` uses the CPU more aggressively; results are appended per
 dataset so a long run survives crashes without losing completed work.
-
-> To quantify the speedup/convergence gain on your machine, compare
-> `execution_time`, `n_iter` and `converged` columns of
-> `f3_mixed_fairness.csv` against the legacy E5 CSV (`legacy/` contains the old
-> runner) on the same grid/datasets.
